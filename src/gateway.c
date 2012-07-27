@@ -18,7 +18,7 @@
  *                                                                  *
  \********************************************************************/
 
-/* $Id: gateway.c 1305 2007-11-01 20:04:20Z benoitg $ */
+/* $Id$ */
 /** @internal
   @file gateway.c
   @brief Main loop
@@ -60,12 +60,12 @@
 #include "httpd_thread.h"
 #include "util.h"
 
-/** XXX Ugly hack 
+/** XXX Ugly hack
  * We need to remember the thread IDs of threads that simulate wait with pthread_cond_timedwait
  * so we can explicitly kill them in the termination handler
  */
 static pthread_t tid_fw_counter = 0;
-static pthread_t tid_ping = 0; 
+static pthread_t tid_ping = 0;
 
 /* The internal web server */
 httpd * webserver = NULL;
@@ -118,7 +118,7 @@ void get_clients_from_parent(void) {
 	t_client * lastclient = NULL;
 
 	config = config_get_config();
-	
+
 	debug(LOG_INFO, "Connecting to parent to download clients");
 
 	/* Connect to socket */
@@ -255,7 +255,7 @@ sigchld_handler(int s)
 {
 	int	status;
 	pid_t rc;
-	
+
 	debug(LOG_DEBUG, "Handler for SIGCHLD called. Trying to reap a child");
 
 	rc = waitpid(-1, &status, WNOHANG);
@@ -263,7 +263,7 @@ sigchld_handler(int s)
 	debug(LOG_DEBUG, "Handler for SIGCHLD reaped child PID %d", rc);
 }
 
-/** Exits cleanly after cleaning up the firewall.  
+/** Exits cleanly after cleaning up the firewall.
  *  Use this function anytime you need to exit after firewall initialization */
 void
 termination_handler(int s)
@@ -286,7 +286,7 @@ termination_handler(int s)
 
 	/* XXX Hack
 	 * Aparently pthread_cond_timedwait under openwrt prevents signals (and therefore
-	 * termination handler) from happening so we need to explicitly kill the threads 
+	 * termination handler) from happening so we need to explicitly kill the threads
 	 * that use that
 	 */
 	if (tid_fw_counter) {
@@ -302,7 +302,7 @@ termination_handler(int s)
 	exit(s == 0 ? 1 : 0);
 }
 
-/** @internal 
+/** @internal
  * Registers all the signal handlers
  */
 static void
@@ -311,7 +311,7 @@ init_signals(void)
 	struct sigaction sa;
 
 	debug(LOG_DEBUG, "Initializing signal handlers");
-	
+
 	sa.sa_handler = sigchld_handler;
 	sigemptyset(&sa.sa_mask);
 	sa.sa_flags = SA_RESTART;
@@ -356,7 +356,7 @@ init_signals(void)
 }
 
 /**@internal
- * Main execution loop 
+ * Main execution loop
  */
 static void
 main_loop(void)
@@ -367,7 +367,7 @@ main_loop(void)
 	request *r;
 	void **params;
 
-    /* Set the time when wifidog started */
+	/* Set the time when wifidog started */
 	if (!started_time) {
 		debug(LOG_INFO, "Setting started_time");
 		started_time = time(NULL);
@@ -390,8 +390,8 @@ main_loop(void)
 	/* If we don't have the Gateway ID, construct it from the internal MAC address.
 	 * "Can't fail" so exit() if the impossible happens. */
 	if (!config->gw_id) {
-    	debug(LOG_DEBUG, "Finding MAC address of %s", config->gw_interface);
-    	if ((config->gw_id = get_iface_mac(config->gw_interface)) == NULL) {
+		debug(LOG_DEBUG, "Finding MAC address of %s", config->gw_interface);
+		if ((config->gw_id = get_iface_mac(config->gw_interface)) == NULL) {
 			debug(LOG_ERR, "Could not get MAC address information of %s, exiting...", config->gw_interface);
 			exit(1);
 		}
@@ -425,8 +425,8 @@ main_loop(void)
 	/* Start clean up thread */
 	result = pthread_create(&tid_fw_counter, NULL, (void *)thread_client_timeout_check, NULL);
 	if (result != 0) {
-	    debug(LOG_ERR, "FATAL: Failed to create a new thread (fw_counter) - exiting");
-	    termination_handler(0);
+		debug(LOG_ERR, "FATAL: Failed to create a new thread (fw_counter) - exiting");
+		termination_handler(0);
 	}
 	pthread_detach(tid_fw_counter);
 
@@ -437,15 +437,15 @@ main_loop(void)
 		termination_handler(0);
 	}
 	pthread_detach(tid);
-	
+
 	/* Start heartbeat thread */
 	result = pthread_create(&tid_ping, NULL, (void *)thread_ping, NULL);
 	if (result != 0) {
-	    debug(LOG_ERR, "FATAL: Failed to create a new thread (ping) - exiting");
+		debug(LOG_ERR, "FATAL: Failed to create a new thread (ping) - exiting");
 		termination_handler(0);
 	}
 	pthread_detach(tid_ping);
-	
+
 	debug(LOG_NOTICE, "Waiting for connections");
 	while(1) {
 		r = httpdGetConnection(webserver, NULL);

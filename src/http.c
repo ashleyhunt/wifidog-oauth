@@ -18,7 +18,7 @@
  *                                                                  *
  \********************************************************************/
 
-/* $Id: http.c 1373 2008-09-30 09:27:40Z wichert $ */
+/* $Id$ */
 /** @file http.c
   @brief HTTP IO functions
   @author Copyright (C) 2004 Philippe April <papril777@yahoo.com>
@@ -69,40 +69,41 @@ http_callback_404(httpd *webserver, request *r)
 	t_auth_serv	*auth_server = get_auth_server();
 
 	memset(tmp_url, 0, sizeof(tmp_url));
-	/* 
+	/*
 	 * XXX Note the code below assumes that the client's request is a plain
 	 * http request to a standard port. At any rate, this handler is called only
 	 * if the internet/auth server is down so it's not a huge loss, but still.
 	 */
-        snprintf(tmp_url, (sizeof(tmp_url) - 1), "http://%s%s%s%s",
-                        r->request.host,
-                        r->request.path,
-                        r->request.query[0] ? "?" : "",
-                        r->request.query);
+	snprintf(tmp_url, (sizeof(tmp_url) - 1), "http://%s%s%s%s",
+	         r->request.host,
+	         r->request.path,
+	         r->request.query[0] ? "?" : "",
+	         r->request.query);
+
 	url = httpdUrlEncode(tmp_url);
 
 	if (!is_online()) {
 		/* The internet connection is down at the moment  - apologize and do not redirect anywhere */
 		char * buf;
-		safe_asprintf(&buf, 
+		safe_asprintf(&buf,
 			"<p>We apologize, but it seems that the internet connection that powers this hotspot is temporarily unavailable.</p>"
 			"<p>If at all possible, please notify the owners of this hotspot that the internet connection is out of service.</p>"
 			"<p>The maintainers of this network are aware of this disruption.  We hope that this situation will be resolved soon.</p>"
 			"<p>In a while please <a href='%s'>click here</a> to try your request again.</p>", tmp_url);
 
-                send_http_page(r, "Uh oh! Internet access unavailable!", buf);
+		send_http_page(r, "Uh oh! Internet access unavailable!", buf);
 		free(buf);
 		debug(LOG_INFO, "Sent %s an apology since I am not online - no point sending them to auth server", r->clientAddr);
 	}
 	else if (!is_auth_online()) {
 		/* The auth server is down at the moment - apologize and do not redirect anywhere */
 		char * buf;
-		safe_asprintf(&buf, 
+		safe_asprintf(&buf,
 			"<p>We apologize, but it seems that we are currently unable to re-direct you to the login screen.</p>"
 			"<p>The maintainers of this network are aware of this disruption.  We hope that this situation will be resolved soon.</p>"
 			"<p>In a couple of minutes please <a href='%s'>click here</a> to try your request again.</p>", tmp_url);
 
-                send_http_page(r, "Uh oh! Login screen unavailable!", buf);
+		send_http_page(r, "Uh oh! Login screen unavailable!", buf);
 		free(buf);
 		debug(LOG_INFO, "Sent %s an apology since auth server not online - no point sending them to auth server", r->clientAddr);
 	}
@@ -112,7 +113,7 @@ http_callback_404(httpd *webserver, request *r)
 		safe_asprintf(&urlFragment, "%sgw_address=%s&gw_port=%d&gw_id=%s&url=%s",
 			auth_server->authserv_login_script_path_fragment,
 			config->gw_address,
-			config->gw_port, 
+			config->gw_port,
 			config->gw_id,
 			url);
 		debug(LOG_INFO, "Captured %s requesting [%s] and re-directing them to login page", r->clientAddr, url);
@@ -122,28 +123,28 @@ http_callback_404(httpd *webserver, request *r)
 	free(url);
 }
 
-void 
+void
 http_callback_wifidog(httpd *webserver, request *r)
 {
 	send_http_page(r, "WiFiDog", "Please use the menu to navigate the features of this WiFiDog installation.");
 }
 
-void 
+void
 http_callback_about(httpd *webserver, request *r)
 {
 	send_http_page(r, "About WiFiDog", "This is WiFiDog version <strong>" VERSION "</strong>");
 }
 
-void 
+void
 http_callback_status(httpd *webserver, request *r)
 {
 	const s_config *config = config_get_config();
 	char * status = NULL;
 	char *buf;
 
-	if (config->httpdusername && 
-			(strcmp(config->httpdusername, r->request.authUser) ||
-			 strcmp(config->httpdpassword, r->request.authPassword))) {
+	if (config->httpdusername &&
+		 (strcmp(config->httpdusername, r->request.authUser) ||
+		 strcmp(config->httpdpassword, r->request.authPassword))) {
 		debug(LOG_INFO, "Status page requested, forcing authentication");
 		httpdForceAuthenticate(r, config->httpdrealm);
 		return;
@@ -155,8 +156,9 @@ http_callback_status(httpd *webserver, request *r)
 	free(buf);
 	free(status);
 }
+
 /** @brief Convenience function to redirect the web browser to the auth server
- * @param r The request 
+ * @param r The request
  * @param urlFragment The end of the auth server URL to redirect to (the part after path)
  * @param text The text to include in the redirect header ant the mnual redirect title */
 void http_send_redirect_to_auth(request *r, char *urlFragment, char *text)
@@ -172,7 +174,7 @@ void http_send_redirect_to_auth(request *r, char *urlFragment, char *text)
 		protocol = "http";
 		port = auth_server->authserv_http_port;
 	}
-			    		
+
 	char *url = NULL;
 	safe_asprintf(&url, "%s://%s:%d%s%s",
 		protocol,
@@ -182,11 +184,11 @@ void http_send_redirect_to_auth(request *r, char *urlFragment, char *text)
 		urlFragment
 	);
 	http_send_redirect(r, url, text);
-	free(url);	
+	free(url);
 }
 
-/** @brief Sends a redirect to the web browser 
- * @param r The request 
+/** @brief Sends a redirect to the web browser
+ * @param r The request
  * @param url The url to redirect to
  * @param text The text to include in the redirect header and the manual redirect link title.  NULL is acceptable */
 void http_send_redirect(request *r, char *url, char *text)
@@ -202,23 +204,23 @@ void http_send_redirect(request *r, char *url, char *text)
 		if(text) {
 			safe_asprintf(&response, "307 %s\n",
 				text
-			);	
+			);
 		}
 		else {
 			safe_asprintf(&response, "307 %s\n",
 				"Redirecting"
-			);		
-		}	
+			);
+		}
 		httpdSetResponse(r, response);
 		httpdAddHeader(r, header);
 		free(response);
-		free(header);	
+		free(header);
 		safe_asprintf(&message, "Please <a href='%s'>click here</a>.", url);
 		send_http_page(r, text ? text : "Redirection to message", message);
 		free(message);
 }
 
-void 
+void
 http_callback_auth(httpd *webserver, request *r)
 {
 	t_client	*client;
@@ -235,30 +237,30 @@ http_callback_auth(httpd *webserver, request *r)
 			/* We have their MAC address */
 
 			LOCK_CLIENT_LIST();
-			
+
 			if ((client = client_list_find(r->clientAddr, mac)) == NULL) {
 				debug(LOG_DEBUG, "New client for %s", r->clientAddr);
 				client_list_append(r->clientAddr, mac, token->value);
 			} else if (logout) {
-			    t_authresponse  authresponse;
-			    s_config *config = config_get_config();
-			    unsigned long long incoming = client->counters.incoming;
-			    unsigned long long outgoing = client->counters.outgoing;
-			    char *ip = safe_strdup(client->ip);
-			    char *urlFragment = NULL;
-			    t_auth_serv	*auth_server = get_auth_server();
-			    				    	
-			    fw_deny(client->ip, client->mac, client->fw_connection_state);
-			    client_list_delete(client);
-			    debug(LOG_DEBUG, "Got logout from %s", client->ip);
-			    
-			    /* Advertise the logout if we have an auth server */
-			    if (config->auth_servers != NULL) {
+				t_authresponse  authresponse;
+				s_config *config = config_get_config();
+				unsigned long long incoming = client->counters.incoming;
+				unsigned long long outgoing = client->counters.outgoing;
+				char *ip = safe_strdup(client->ip);
+				char *urlFragment = NULL;
+				t_auth_serv	*auth_server = get_auth_server();
+
+				fw_deny(client->ip, client->mac, client->fw_connection_state);
+				client_list_delete(client);
+				debug(LOG_DEBUG, "Got logout from %s", client->ip);
+
+				/* Advertise the logout if we have an auth server */
+				if (config->auth_servers != NULL) {
 					UNLOCK_CLIENT_LIST();
-					auth_server_request(&authresponse, REQUEST_TYPE_LOGOUT, ip, mac, token->value, 
-									    incoming, outgoing);
+					auth_server_request(&authresponse, REQUEST_TYPE_LOGOUT, ip, mac, token->value,
+										incoming, outgoing);
 					LOCK_CLIENT_LIST();
-					
+
 					/* Re-direct them to auth server */
 					debug(LOG_INFO, "Got manual logout from client ip %s, mac %s, token %s"
 					"- redirecting them to logout message", client->ip, client->mac, client->token);
@@ -268,9 +270,9 @@ http_callback_auth(httpd *webserver, request *r)
 					);
 					http_send_redirect_to_auth(r, urlFragment, "Redirect to logout message");
 					free(urlFragment);
-			    }
-			    free(ip);
- 			} 
+				}
+				free(ip);
+ 			}
  			else {
 				debug(LOG_DEBUG, "Client for %s is already in the client list", client->ip);
 			}
@@ -288,39 +290,38 @@ http_callback_auth(httpd *webserver, request *r)
 
 void send_http_page(request *r, const char *title, const char* message)
 {
-    s_config	*config = config_get_config();
-    char *buffer;
-    struct stat stat_info;
-    int fd;
-    ssize_t written;
+	s_config	*config = config_get_config();
+	char *buffer;
+	struct stat stat_info;
+	int fd;
+	ssize_t written;
 
-    fd=open(config->htmlmsgfile, O_RDONLY);
-    if (fd==-1) {
-        debug(LOG_CRIT, "Failed to open HTML message file %s: %s", config->htmlmsgfile, strerror(errno));
-        return;
-    }
+	fd=open(config->htmlmsgfile, O_RDONLY);
+	if (fd == -1) {
+		debug(LOG_CRIT, "Failed to open HTML message file %s: %s", config->htmlmsgfile, strerror(errno));
+		return;
+	}
 
-    if (fstat(fd, &stat_info)==-1) {
-        debug(LOG_CRIT, "Failed to stat HTML message file: %s", strerror(errno));
-        close(fd);
-        return;
-    }
+	if (fstat(fd, &stat_info)==-1) {
+		debug(LOG_CRIT, "Failed to stat HTML message file: %s", strerror(errno));
+		close(fd);
+		return;
+	}
 
-    buffer=(char*)safe_malloc(stat_info.st_size+1);
-    written=read(fd, buffer, stat_info.st_size);
-    if (written==-1) {
-        debug(LOG_CRIT, "Failed to read HTML message file: %s", strerror(errno));
-        free(buffer);
-        close(fd);
-        return;
-    }
-    close(fd);
+	buffer=(char*)safe_malloc(stat_info.st_size+1);
+	written=read(fd, buffer, stat_info.st_size);
+	if (written==-1) {
+		debug(LOG_CRIT, "Failed to read HTML message file: %s", strerror(errno));
+		free(buffer);
+		close(fd);
+		return;
+	}
+	close(fd);
 
-    buffer[written]=0;
-    httpdAddVariable(r, "title", title);
-    httpdAddVariable(r, "message", message);
-    httpdAddVariable(r, "nodeID", config->gw_id);
-    httpdOutput(r, buffer);
-    free(buffer);
+	buffer[written]=0;
+	httpdAddVariable(r, "title", title);
+	httpdAddVariable(r, "message", message);
+	httpdAddVariable(r, "nodeID", config->gw_id);
+	httpdOutput(r, buffer);
+	free(buffer);
 }
-

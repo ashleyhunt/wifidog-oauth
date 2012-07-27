@@ -18,10 +18,10 @@
  *                                                                  *
 \********************************************************************/
 
-/* $Id: auth.c 1373 2008-09-30 09:27:40Z wichert $ */
+/* $Id$ */
 /** @file auth.c
-    @brief Authentication handling thread
-    @author Copyright (C) 2004 Alexandre Carmel-Veilleux <acv@miniguru.ca>
+	@brief Authentication handling thread
+	@author Copyright (C) 2004 Alexandre Carmel-Veilleux <acv@miniguru.ca>
 */
 
 #define _GNU_SOURCE
@@ -56,16 +56,16 @@ extern long served_this_session;
 
 /** Launches a thread that periodically checks if any of the connections has timed out
 @param arg Must contain a pointer to a string containing the IP adress of the client to check to check
-@todo Also pass MAC adress? 
+@todo Also pass MAC adress?
 @todo This thread loops infinitely, need a watchdog to verify that it is still running?
-*/  
+*/
 void
 thread_client_timeout_check(const void *arg)
 {
 	pthread_cond_t		cond = PTHREAD_COND_INITIALIZER;
 	pthread_mutex_t		cond_mutex = PTHREAD_MUTEX_INITIALIZER;
 	struct	timespec	timeout;
-	
+
 	while (1) {
 		/* Sleep for config.checkinterval seconds... */
 		timeout.tv_sec = time(NULL) + config_get_config()->checkinterval;
@@ -73,15 +73,15 @@ thread_client_timeout_check(const void *arg)
 
 		/* Mutex must be locked for pthread_cond_timedwait... */
 		pthread_mutex_lock(&cond_mutex);
-		
+
 		/* Thread safe "sleep" */
 		pthread_cond_timedwait(&cond, &cond_mutex, &timeout);
 
 		/* No longer needs to be locked */
 		pthread_mutex_unlock(&cond_mutex);
-	
+
 		debug(LOG_DEBUG, "Running fw_counter()");
-	
+
 		fw_sync_with_authserver();
 	}
 }
@@ -110,24 +110,24 @@ authenticate_client(request *r)
 		UNLOCK_CLIENT_LIST();
 		return;
 	}
-	
+
 	mac = safe_strdup(client->mac);
 	token = safe_strdup(client->token);
-	
+
 	UNLOCK_CLIENT_LIST();
-	
-	/* 
+
+	/*
 	 * At this point we've released the lock while we do an HTTP request since it could
 	 * take multiple seconds to do and the gateway would effectively be frozen if we
 	 * kept the lock.
 	 */
 	auth_server_request(&auth_response, REQUEST_TYPE_LOGIN, r->clientAddr, mac, token, 0, 0);
-	
+
 	LOCK_CLIENT_LIST();
-	
+
 	/* can't trust the client to still exist after n seconds have passed */
 	client = client_list_find(r->clientAddr, mac);
-	
+
 	if (client == NULL) {
 		debug(LOG_ERR, "Could not find client node for %s (%s)", r->clientAddr, mac);
 		UNLOCK_CLIENT_LIST();
@@ -135,7 +135,7 @@ authenticate_client(request *r)
 		free(mac);
 		return;
 	}
-	
+
 	free(token);
 	free(mac);
 
@@ -162,7 +162,7 @@ authenticate_client(request *r)
 		free(urlFragment);
 		break;
 
-    case AUTH_VALIDATION:
+	case AUTH_VALIDATION:
 		/* They just got validated for X minutes to check their email */
 		debug(LOG_INFO, "Got VALIDATION from central server authenticating token %s from %s at %s"
 				"- adding to firewall and redirecting them to activate message", client->token,
@@ -175,24 +175,24 @@ authenticate_client(request *r)
 		);
 		http_send_redirect_to_auth(r, urlFragment, "Redirect to activate message");
 		free(urlFragment);
-	    break;
+		break;
 
-    case AUTH_ALLOWED:
+	case AUTH_ALLOWED:
 		/* Logged in successfully as a regular account */
 		debug(LOG_INFO, "Got ALLOWED from central server authenticating token %s from %s at %s - "
 				"adding to firewall and redirecting them to portal", client->token, client->ip, client->mac);
 		client->fw_connection_state = FW_MARK_KNOWN;
 		fw_allow(client->ip, client->mac, FW_MARK_KNOWN);
-        served_this_session++;
+		served_this_session++;
 		safe_asprintf(&urlFragment, "%sgw_id=%s",
 			auth_server->authserv_portal_script_path_fragment,
 			config->gw_id
 		);
 		http_send_redirect_to_auth(r, urlFragment, "Redirect to portal");
 		free(urlFragment);
-	    break;
+		break;
 
-    case AUTH_VALIDATION_FAILED:
+	case AUTH_VALIDATION_FAILED:
 		 /* Client had X minutes to validate account by email and didn't = too late */
 		debug(LOG_INFO, "Got VALIDATION_FAILED from central server authenticating token %s from %s at %s "
 				"- redirecting them to failed_validation message", client->token, client->ip, client->mac);
@@ -202,17 +202,16 @@ authenticate_client(request *r)
 		);
 		http_send_redirect_to_auth(r, urlFragment, "Redirect to failed validation message");
 		free(urlFragment);
-	    break;
+		break;
 
-    default:
+	default:
 		debug(LOG_WARNING, "I don't know what the validation code %d means for token %s from %s at %s - sending error message", auth_response.authcode, client->token, client->ip, client->mac);
 		send_http_page(r, "Internal Error", "We can not validate your request at this time");
-	    break;
+		break;
 
 	}
 
 	UNLOCK_CLIENT_LIST();
 	return;
 }
-
 
