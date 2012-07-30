@@ -36,6 +36,7 @@
 #define TABLE_WIFIDOG_WIFI_TO_ROUTER "WiFiDog_$ID$_WIFI2Router"
 #define TABLE_WIFIDOG_INCOMING  "WiFiDog_$ID$_Incoming"
 #define TABLE_WIFIDOG_AUTHSERVERS "WiFiDog_$ID$_AuthServers"
+#define TABLE_WIFIDOG_OAUTHSERVICES "WiFiDog_$ID$_OAuthServices"
 #define TABLE_WIFIDOG_GLOBAL  "WiFiDog_$ID$_Global"
 #define TABLE_WIFIDOG_VALIDATE  "WiFiDog_$ID$_Validate"
 #define TABLE_WIFIDOG_KNOWN     "WiFiDog_$ID$_Known"

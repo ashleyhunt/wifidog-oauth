@@ -214,6 +214,37 @@ iptables_fw_set_authservers(void)
 
 }
 
+void
+iptables_fw_set_oauth_services(void)
+{
+	const s_config *config = NULL;
+	int gw_port = 0;
+	char *domains_to_enable[] = {
+		/* Google */
+		"accounts.l.google.com",        /* Common */
+		"accounts-cctld.l.google.com",   /* Localized */
+		"clients.l.google.com",
+		"googlehosted.l.googleusercontent.com",
+		"ssl.gstatic.com",
+		/* Facebook */
+		"www.facebook.com",
+		"s-static.ak.fbcdn.net",
+		/* Twitter */
+		"api.twitter.com",
+		"cdn.api.twitter.com",
+		NULL
+	};
+	char *domain = NULL;
+	short i = 0;
+
+	while (domains_to_enable[i]) {
+		domain = domains_to_enable[i];
+		iptables_do_command("-t filter -A" TABLE_WIFIDOG_OAUTHSERVICES " -d %s -p tcp --dport 443 -j ACCEPT", domain);
+		iptables_do_command("-t nat -A" TABLE_WIFIDOG_OAUTHSERVICES " -d %s -p tcp --dport 443 -j ACCEPT", domain);
+		i++;
+	}
+}
+
 /** Initialize the firewall rules
 */
 	int
@@ -272,6 +303,7 @@ iptables_fw_init(void)
 	iptables_do_command("-t nat -N " TABLE_WIFIDOG_GLOBAL);
 	iptables_do_command("-t nat -N " TABLE_WIFIDOG_UNKNOWN);
 	iptables_do_command("-t nat -N " TABLE_WIFIDOG_AUTHSERVERS);
+	iptables_do_command("-t nat -N " TABLE_WIFIDOG_OAUTHSERVICES);
 
 	/* Assign links and rules to these new chains */
 	iptables_do_command("-t nat -A PREROUTING -i %s -j " TABLE_WIFIDOG_OUTGOING, config->gw_interface);
@@ -287,6 +319,7 @@ iptables_fw_init(void)
 	iptables_do_command("-t nat -A " TABLE_WIFIDOG_UNKNOWN " -j " TABLE_WIFIDOG_AUTHSERVERS);
 	iptables_do_command("-t nat -A " TABLE_WIFIDOG_UNKNOWN " -j " TABLE_WIFIDOG_GLOBAL);
 	iptables_do_command("-t nat -A " TABLE_WIFIDOG_UNKNOWN " -p tcp --dport 80 -j REDIRECT --to-ports %d", gw_port);
+	iptables_do_command("-t nat -A " TABLE_WIFIDOG_UNKNOWN " -j " TABLE_WIFIDOG_OAUTHSERVICES);
 
 
 	/*
@@ -303,6 +336,7 @@ iptables_fw_init(void)
 	iptables_do_command("-t filter -N " TABLE_WIFIDOG_VALIDATE);
 	iptables_do_command("-t filter -N " TABLE_WIFIDOG_KNOWN);
 	iptables_do_command("-t filter -N " TABLE_WIFIDOG_UNKNOWN);
+	iptables_do_command("-t filter -N " TABLE_WIFIDOG_OAUTHSERVICES);
 
 	/* Assign links and rules to these new chains */
 
@@ -324,6 +358,10 @@ iptables_fw_init(void)
 
 	iptables_do_command("-t filter -A " TABLE_WIFIDOG_WIFI_TO_INTERNET " -j " TABLE_WIFIDOG_AUTHSERVERS);
 	iptables_fw_set_authservers();
+
+	/* OAuth services */
+	iptables_do_command("-t filter -A " TABLE_WIFIDOG_WIFI_TO_INTERNET " -j " TABLE_WIFIDOG_OAUTHSERVICES);
+	iptables_fw_set_oauth_services();
 
 	iptables_do_command("-t filter -A " TABLE_WIFIDOG_WIFI_TO_INTERNET " -m mark --mark 0x%u -j " TABLE_WIFIDOG_LOCKED, FW_MARK_LOCKED);
 	iptables_load_ruleset("filter", "locked-users", TABLE_WIFIDOG_LOCKED);
@@ -386,12 +424,14 @@ iptables_fw_destroy(void)
 	iptables_do_command("-t nat -F " TABLE_WIFIDOG_WIFI_TO_INTERNET);
 	iptables_do_command("-t nat -F " TABLE_WIFIDOG_GLOBAL);
 	iptables_do_command("-t nat -F " TABLE_WIFIDOG_UNKNOWN);
+	iptables_do_command("-t nat -F " TABLE_WIFIDOG_OAUTHSERVICES);
 	iptables_do_command("-t nat -X " TABLE_WIFIDOG_AUTHSERVERS);
 	iptables_do_command("-t nat -X " TABLE_WIFIDOG_OUTGOING);
 	iptables_do_command("-t nat -X " TABLE_WIFIDOG_WIFI_TO_ROUTER);
 	iptables_do_command("-t nat -X " TABLE_WIFIDOG_WIFI_TO_INTERNET);
 	iptables_do_command("-t nat -X " TABLE_WIFIDOG_GLOBAL);
 	iptables_do_command("-t nat -X " TABLE_WIFIDOG_UNKNOWN);
+	iptables_do_command("-t nat -X " TABLE_WIFIDOG_OAUTHSERVICES);
 
 	/*
 	 *
@@ -407,6 +447,7 @@ iptables_fw_destroy(void)
 	iptables_do_command("-t filter -F " TABLE_WIFIDOG_VALIDATE);
 	iptables_do_command("-t filter -F " TABLE_WIFIDOG_KNOWN);
 	iptables_do_command("-t filter -F " TABLE_WIFIDOG_UNKNOWN);
+	iptables_do_command("-t filter -F " TABLE_WIFIDOG_OAUTHSERVICES);
 	iptables_do_command("-t filter -X " TABLE_WIFIDOG_WIFI_TO_INTERNET);
 	iptables_do_command("-t filter -X " TABLE_WIFIDOG_AUTHSERVERS);
 	iptables_do_command("-t filter -X " TABLE_WIFIDOG_LOCKED);
@@ -414,6 +455,7 @@ iptables_fw_destroy(void)
 	iptables_do_command("-t filter -X " TABLE_WIFIDOG_VALIDATE);
 	iptables_do_command("-t filter -X " TABLE_WIFIDOG_KNOWN);
 	iptables_do_command("-t filter -X " TABLE_WIFIDOG_UNKNOWN);
+	iptables_do_command("-t filter -X " TABLE_WIFIDOG_OAUTHSERVICES);
 
 	return 1;
 }

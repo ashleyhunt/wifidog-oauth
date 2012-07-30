@@ -108,6 +108,13 @@ http_callback_404(httpd *webserver, request *r)
 		debug(LOG_INFO, "Sent %s an apology since auth server not online - no point sending them to auth server", r->clientAddr);
 	}
 	else {
+		/* Allow to go to Facebook, Google OAuth login */
+		debug(LOG_INFO, "Host %s", r->request.host);
+		if (strcmp(r->request.host, "accounts.google.com") == 0) {
+			debug(LOG_INFO, "=== Google OAuth ===");
+			http_send_redirect(r, "https://accounts.google.com/o/oauth2/auth", NULL);
+		}
+
 		/* Re-direct them to auth server */
 		char *urlFragment;
 		safe_asprintf(&urlFragment, "%sgw_address=%s&gw_port=%d&gw_id=%s&url=%s",
