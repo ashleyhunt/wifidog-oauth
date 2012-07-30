@@ -85,8 +85,8 @@ typedef enum {
 	oHTTPDMaxConn,
 	oHTTPDName,
 	oHTTPDRealm,
-        oHTTPDUsername,
-        oHTTPDPassword,
+	oHTTPDUsername,
+	oHTTPDPassword,
 	oClientTimeout,
 	oCheckInterval,
 	oWdctlSocket,
@@ -94,7 +94,7 @@ typedef enum {
 	oFirewallRule,
 	oFirewallRuleSet,
 	oTrustedMACList,
-        oHtmlMessageFile,
+	oHtmlMessageFile,
 } OpCodes;
 
 /** @internal
@@ -133,7 +133,7 @@ static const struct {
 	{ "firewallruleset",		oFirewallRuleSet },
 	{ "firewallrule",		oFirewallRule },
 	{ "trustedmaclist",		oTrustedMACList },
-        { "htmlmessagefile",		oHtmlMessageFile },
+	{ "htmlmessagefile",		oHtmlMessageFile },
 	{ NULL,				oBadOption },
 };
 
@@ -151,7 +151,7 @@ static OpCodes config_parse_token(const char *cp, const char *filename, int line
 s_config *
 config_get_config(void)
 {
-    return &config;
+	return &config;
 }
 
 /** Sets the default config parameters and initialises the configuration system */
@@ -190,7 +190,7 @@ config_init(void)
 void
 config_init_override(void)
 {
-    if (config.daemon == -1) config.daemon = DEFAULT_DAEMON;
+	if (config.daemon == -1) config.daemon = DEFAULT_DAEMON;
 }
 
 /** @internal
@@ -205,8 +205,8 @@ config_parse_token(const char *cp, const char *filename, int linenum)
 		if (strcasecmp(cp, keywords[i].name) == 0)
 			return keywords[i].opcode;
 
-	debug(LOG_ERR, "%s: line %d: Bad configuration option: %s", 
-			filename, linenum, cp);
+	debug(LOG_ERR, "%s: line %d: Bad configuration option: %s",
+	      filename, linenum, cp);
 	return oBadOption;
 }
 
@@ -216,7 +216,7 @@ Parses auth server information
 static void
 parse_auth_server(FILE *file, const char *filename, int *linenum)
 {
-	char		*host = NULL,
+	char	*host = NULL,
 			*path = NULL,
 			*loginscriptpathfragment = NULL,
 			*portalscriptpathfragment = NULL,
@@ -243,8 +243,8 @@ parse_auth_server(FILE *file, const char *filename, int *linenum)
 	http_port = DEFAULT_AUTHSERVPORT;
 	ssl_port = DEFAULT_AUTHSERVSSLPORT;
 	ssl_available = DEFAULT_AUTHSERVSSLAVAILABLE;
-	
-	/* Read first line */	
+
+	/* Read first line */
 	memset(line, 0, MAX_BUF);
 	fgets(line, MAX_BUF - 1, file);
 	(*linenum)++; /* increment line counter. */
@@ -277,10 +277,10 @@ parse_auth_server(FILE *file, const char *filename, int *linenum)
 			/* skip all further blanks. */
 			while (isblank(*p2))
 				p2++;
-			
+
 			/* Get opcode */
 			opcode = config_parse_token(p1, filename, *linenum);
-			
+
 			switch (opcode) {
 				case oAuthServHostname:
 					host = safe_strdup(p2);
@@ -292,7 +292,7 @@ parse_auth_server(FILE *file, const char *filename, int *linenum)
 				case oAuthServLoginScriptPathFragment:
 					free(loginscriptpathfragment);
 					loginscriptpathfragment = safe_strdup(p2);
-					break;					
+					break;
 				case oAuthServPortalScriptPathFragment:
 					free(portalscriptpathfragment);
 					portalscriptpathfragment = safe_strdup(p2);
@@ -304,7 +304,7 @@ parse_auth_server(FILE *file, const char *filename, int *linenum)
 				case oAuthServPingScriptPathFragment:
 					free(pingscriptpathfragment);
 					pingscriptpathfragment = safe_strdup(p2);
-					break;					
+					break;
 				case oAuthServAuthScriptPathFragment:
 					free(authscriptpathfragment);
 					authscriptpathfragment = safe_strdup(p2);
@@ -318,13 +318,12 @@ parse_auth_server(FILE *file, const char *filename, int *linenum)
 				case oAuthServSSLAvailable:
 					ssl_available = parse_boolean_value(p2);
 					if (ssl_available < 0)
-						ssl_available = 0;
+					ssl_available = 0;
 					break;
 				case oBadOption:
 				default:
 					debug(LOG_ERR, "Bad option on line %d "
-							"in %s.", *linenum,
-							filename);
+						  "in %s.", *linenum, filename);
 					debug(LOG_ERR, "Exiting...");
 					exit(-1);
 					break;
@@ -340,13 +339,13 @@ parse_auth_server(FILE *file, const char *filename, int *linenum)
 	/* only proceed if we have an host and a path */
 	if (host == NULL)
 		return;
-	
+
 	debug(LOG_DEBUG, "Adding %s:%d (SSL: %d) %s to the auth server list",
-			host, http_port, ssl_port, path);
+	      host, http_port, ssl_port, path);
 
 	/* Allocate memory */
 	new = safe_malloc(sizeof(t_auth_serv));
-	
+
 	/* Fill in struct */
 	memset(new, 0, sizeof(t_auth_serv)); /*< Fill all with NULL */
 	new->authserv_hostname = host;
@@ -354,21 +353,21 @@ parse_auth_server(FILE *file, const char *filename, int *linenum)
 	new->authserv_path = path;
 	new->authserv_login_script_path_fragment = loginscriptpathfragment;
 	new->authserv_portal_script_path_fragment = portalscriptpathfragment;
-	new->authserv_msg_script_path_fragment = msgscriptpathfragment;    
-	new->authserv_ping_script_path_fragment = pingscriptpathfragment;  
-	new->authserv_auth_script_path_fragment = authscriptpathfragment;  
+	new->authserv_msg_script_path_fragment = msgscriptpathfragment;
+	new->authserv_ping_script_path_fragment = pingscriptpathfragment;
+	new->authserv_auth_script_path_fragment = authscriptpathfragment;
 	new->authserv_http_port = http_port;
 	new->authserv_ssl_port = ssl_port;
-	
+
 	/* If it's the first, add to config, else append to last server */
 	if (config.auth_servers == NULL) {
 		config.auth_servers = new;
 	} else {
 		for (tmp = config.auth_servers; tmp->next != NULL;
-				tmp = tmp->next);
+			tmp = tmp->next);
 		tmp->next = new;
 	}
-	
+
 	debug(LOG_DEBUG, "Auth server added");
 }
 
@@ -401,14 +400,14 @@ Parses firewall rule set information
 static void
 parse_firewall_ruleset(const char *ruleset, FILE *file, const char *filename, int *linenum)
 {
-	char		line[MAX_BUF],
+	char	line[MAX_BUF],
 			*p1,
 			*p2;
 	int		opcode;
 
 	debug(LOG_DEBUG, "Adding Firewall Rule Set %s", ruleset);
-	
-	/* Read first line */	
+
+	/* Read first line */
 	memset(line, 0, MAX_BUF);
 	fgets(line, MAX_BUF - 1, file);
 	(*linenum)++; /* increment line counter. */
@@ -441,12 +440,12 @@ parse_firewall_ruleset(const char *ruleset, FILE *file, const char *filename, in
 			/* skip all further blanks. */
 			while (isblank(*p2))
 				p2++;
-			
+
 			/* Get opcode */
 			opcode = config_parse_token(p1, filename, *linenum);
 
 			debug(LOG_DEBUG, "p1 = [%s]; p2 = [%s]", p1, p2);
-			
+
 			switch (opcode) {
 				case oFirewallRule:
 					_parse_firewall_rule(ruleset, p2);
@@ -455,8 +454,7 @@ parse_firewall_ruleset(const char *ruleset, FILE *file, const char *filename, in
 				case oBadOption:
 				default:
 					debug(LOG_ERR, "Bad option on line %d "
-							"in %s.", *linenum,
-							filename);
+					      "in %s.", *linenum, filename);
 					debug(LOG_ERR, "Exiting...");
 					exit(-1);
 					break;
@@ -496,11 +494,11 @@ _parse_firewall_rule(const char *ruleset, char *leftover)
 
 	/* lower case */
 	for (i = 0; *(leftover + i) != '\0'
-			&& (*(leftover + i) = tolower((unsigned char)*(leftover + i))); i++);
-	
+		 && (*(leftover + i) = tolower((unsigned char)*(leftover + i))); i++);
+
 	token = leftover;
 	TO_NEXT_WORD(leftover, finished);
-	
+
 	/* Parse token */
 	if (!strcasecmp(token, "block") || finished) {
 		block_allow = 0;
@@ -508,15 +506,15 @@ _parse_firewall_rule(const char *ruleset, char *leftover)
 		block_allow = 1;
 	} else {
 		debug(LOG_ERR, "Invalid rule type %s, expecting "
-				"\"block\" or \"allow\"", token);
+		      "\"block\" or \"allow\"", token);
 		return -1;
 	}
 
 	/* Parse the remainder */
 	/* Get the protocol */
 	if (strncmp(leftover, "tcp", 3) == 0
-			|| strncmp(leftover, "udp", 3) == 0
-			|| strncmp(leftover, "icmp", 4) == 0) {
+	    || strncmp(leftover, "udp", 3) == 0
+	    || strncmp(leftover, "icmp", 4) == 0) {
 		protocol = leftover;
 		TO_NEXT_WORD(leftover, finished);
 	}
@@ -542,8 +540,8 @@ _parse_firewall_rule(const char *ruleset, char *leftover)
 		other_kw = leftover;
 		TO_NEXT_WORD(leftover, finished);
 		if (strcmp(other_kw, "to") || finished) {
-			debug(LOG_ERR, "Invalid or unexpected keyword %s, "
-					"expecting \"to\"", other_kw);
+		    debug(LOG_ERR, "Invalid or unexpected keyword %s, "
+			      "expecting \"to\"", other_kw);
 			return -4; /*< Fail */
 		}
 
@@ -553,10 +551,10 @@ _parse_firewall_rule(const char *ruleset, char *leftover)
 		all_nums = 1;
 		for (i = 0; *(mask + i) != '\0'; i++)
 			if (!isdigit((unsigned char)*(mask + i)) && (*(mask + i) != '.')
-					&& (*(mask + i) != '/'))
+			    && (*(mask + i) != '/'))
 				all_nums = 0; /*< No longer only digits */
 		if (!all_nums) {
-			debug(LOG_ERR, "Invalid mask %s", mask);
+		    debug(LOG_ERR, "Invalid mask %s", mask);
 			return -3; /*< Fail */
 		}
 	}
@@ -575,7 +573,7 @@ _parse_firewall_rule(const char *ruleset, char *leftover)
 		tmp->mask = safe_strdup(mask);
 
 	debug(LOG_DEBUG, "Adding Firewall Rule %s %s port %s to %s", token, tmp->protocol, tmp->port, tmp->mask);
-	
+
 	/* Append the rule record */
 	if (config.rulesets == NULL) {
 		config.rulesets = safe_malloc(sizeof(t_firewall_ruleset));
@@ -607,7 +605,7 @@ _parse_firewall_rule(const char *ruleset, char *leftover)
 			tmp2 = tmp2->next;
 		tmp2->next = tmp;
 	}
-	
+
 	return 1;
 }
 
@@ -617,7 +615,7 @@ get_ruleset(const char *ruleset)
 	t_firewall_ruleset	*tmp;
 
 	for (tmp = config.rulesets; tmp != NULL
-			&& strcmp(tmp->name, ruleset) != 0; tmp = tmp->next);
+	     && strcmp(tmp->name, ruleset) != 0; tmp = tmp->next);
 
 	if (tmp == NULL)
 		return NULL;
@@ -626,7 +624,7 @@ get_ruleset(const char *ruleset)
 }
 
 /**
-@param filename Full path of the configuration file to be read 
+@param filename Full path of the configuration file to be read
 */
 void
 config_read(const char *filename)
@@ -673,7 +671,7 @@ config_read(const char *filename)
 
 			if ((strncmp(s, "#", 1)) != 0) {
 				debug(LOG_DEBUG, "Parsing token: %s, "
-						"value: %s", s, p1);
+				      "value: %s", s, p1);
 				opcode = config_parse_token(s, filename, linenum);
 
 				switch(opcode) {
@@ -698,8 +696,7 @@ config_read(const char *filename)
 					sscanf(p1, "%d", &config.gw_port);
 					break;
 				case oAuthServer:
-					parse_auth_server(fd, filename,
-							&linenum);
+					parse_auth_server(fd, filename, &linenum);
 					break;
 				case oFirewallRuleSet:
 					parse_firewall_ruleset(p1, fd, filename, &linenum);
@@ -724,8 +721,7 @@ config_read(const char *filename)
 					break;
 				case oBadOption:
 					debug(LOG_ERR, "Bad option on line %d "
-							"in %s.", linenum,
-							filename);
+					      "in %s.", linenum, filename);
 					debug(LOG_ERR, "Exiting...");
 					exit(-1);
 					break;
@@ -837,7 +833,7 @@ config_validate(void)
 }
 
 /** @internal
-    Verifies that a required parameter is not a null pointer
+	Verifies that a required parameter is not a null pointer
 */
 static void
 config_notnull(const void *parm, const char *parmname)
