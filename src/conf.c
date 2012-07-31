@@ -724,7 +724,6 @@ config_read(const char *filename)
 					break;
 				case oOAuth:
 					config.oauth = parse_boolean_value(p1);
-					debug(LOG_INFO, "============  OAuth %d ==============", *p1);
 					break;
 				case oBadOption:
 					debug(LOG_ERR, "Bad option on line %d "
