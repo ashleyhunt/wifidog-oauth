@@ -89,7 +89,7 @@ iptables_insert_gateway_id(char **input)
 	*input=buffer;
 }
 
-/** @internal 
+/** @internal
  * */
 static int
 iptables_do_command(const char *format, ...)
@@ -253,6 +253,7 @@ iptables_fw_init(void)
 	const s_config *config;
 	char * ext_interface = NULL;
 	int gw_port = 0;
+	int oauth = 0;
 	t_trusted_mac *p;
 
 	fw_quiet = 0;
@@ -260,6 +261,7 @@ iptables_fw_init(void)
 	LOCK_CONFIG();
 	config = config_get_config();
 	gw_port = config->gw_port;
+	oauth = config->oauth;
 	if (config->external_interface) {
 		ext_interface = safe_strdup(config->external_interface);
 	} else {
@@ -303,7 +305,8 @@ iptables_fw_init(void)
 	iptables_do_command("-t nat -N " TABLE_WIFIDOG_GLOBAL);
 	iptables_do_command("-t nat -N " TABLE_WIFIDOG_UNKNOWN);
 	iptables_do_command("-t nat -N " TABLE_WIFIDOG_AUTHSERVERS);
-	iptables_do_command("-t nat -N " TABLE_WIFIDOG_OAUTHSERVICES);
+	if (oauth)
+		iptables_do_command("-t nat -N " TABLE_WIFIDOG_OAUTHSERVICES);
 
 	/* Assign links and rules to these new chains */
 	iptables_do_command("-t nat -A PREROUTING -i %s -j " TABLE_WIFIDOG_OUTGOING, config->gw_interface);
@@ -336,7 +339,8 @@ iptables_fw_init(void)
 	iptables_do_command("-t filter -N " TABLE_WIFIDOG_VALIDATE);
 	iptables_do_command("-t filter -N " TABLE_WIFIDOG_KNOWN);
 	iptables_do_command("-t filter -N " TABLE_WIFIDOG_UNKNOWN);
-	iptables_do_command("-t filter -N " TABLE_WIFIDOG_OAUTHSERVICES);
+	if (oauth)
+		iptables_do_command("-t filter -N " TABLE_WIFIDOG_OAUTHSERVICES);
 
 	/* Assign links and rules to these new chains */
 
@@ -360,8 +364,10 @@ iptables_fw_init(void)
 	iptables_fw_set_authservers();
 
 	/* OAuth services */
-	iptables_do_command("-t filter -A " TABLE_WIFIDOG_WIFI_TO_INTERNET " -j " TABLE_WIFIDOG_OAUTHSERVICES);
-	iptables_fw_set_oauth_services();
+	if (oauth) {
+		iptables_do_command("-t filter -A " TABLE_WIFIDOG_WIFI_TO_INTERNET " -j " TABLE_WIFIDOG_OAUTHSERVICES);
+		iptables_fw_set_oauth_services();
+	}
 
 	iptables_do_command("-t filter -A " TABLE_WIFIDOG_WIFI_TO_INTERNET " -m mark --mark 0x%u -j " TABLE_WIFIDOG_LOCKED, FW_MARK_LOCKED);
 	iptables_load_ruleset("filter", "locked-users", TABLE_WIFIDOG_LOCKED);
@@ -391,6 +397,7 @@ iptables_fw_init(void)
 	int
 iptables_fw_destroy(void)
 {
+	int oauth = config_get_config()->oauth;
 	fw_quiet = 1;
 
 	debug(LOG_DEBUG, "Destroying our iptables entries");
@@ -424,14 +431,16 @@ iptables_fw_destroy(void)
 	iptables_do_command("-t nat -F " TABLE_WIFIDOG_WIFI_TO_INTERNET);
 	iptables_do_command("-t nat -F " TABLE_WIFIDOG_GLOBAL);
 	iptables_do_command("-t nat -F " TABLE_WIFIDOG_UNKNOWN);
-	iptables_do_command("-t nat -F " TABLE_WIFIDOG_OAUTHSERVICES);
+	if (oauth)
+		iptables_do_command("-t nat -F " TABLE_WIFIDOG_OAUTHSERVICES);
 	iptables_do_command("-t nat -X " TABLE_WIFIDOG_AUTHSERVERS);
 	iptables_do_command("-t nat -X " TABLE_WIFIDOG_OUTGOING);
 	iptables_do_command("-t nat -X " TABLE_WIFIDOG_WIFI_TO_ROUTER);
 	iptables_do_command("-t nat -X " TABLE_WIFIDOG_WIFI_TO_INTERNET);
 	iptables_do_command("-t nat -X " TABLE_WIFIDOG_GLOBAL);
 	iptables_do_command("-t nat -X " TABLE_WIFIDOG_UNKNOWN);
-	iptables_do_command("-t nat -X " TABLE_WIFIDOG_OAUTHSERVICES);
+	if (oauth)
+		iptables_do_command("-t nat -X " TABLE_WIFIDOG_OAUTHSERVICES);
 
 	/*
 	 *
@@ -447,7 +456,8 @@ iptables_fw_destroy(void)
 	iptables_do_command("-t filter -F " TABLE_WIFIDOG_VALIDATE);
 	iptables_do_command("-t filter -F " TABLE_WIFIDOG_KNOWN);
 	iptables_do_command("-t filter -F " TABLE_WIFIDOG_UNKNOWN);
-	iptables_do_command("-t filter -F " TABLE_WIFIDOG_OAUTHSERVICES);
+	if (oauth)
+		iptables_do_command("-t filter -F " TABLE_WIFIDOG_OAUTHSERVICES);
 	iptables_do_command("-t filter -X " TABLE_WIFIDOG_WIFI_TO_INTERNET);
 	iptables_do_command("-t filter -X " TABLE_WIFIDOG_AUTHSERVERS);
 	iptables_do_command("-t filter -X " TABLE_WIFIDOG_LOCKED);
@@ -455,7 +465,8 @@ iptables_fw_destroy(void)
 	iptables_do_command("-t filter -X " TABLE_WIFIDOG_VALIDATE);
 	iptables_do_command("-t filter -X " TABLE_WIFIDOG_KNOWN);
 	iptables_do_command("-t filter -X " TABLE_WIFIDOG_UNKNOWN);
-	iptables_do_command("-t filter -X " TABLE_WIFIDOG_OAUTHSERVICES);
+	if (oauth)
+		iptables_do_command("-t filter -X " TABLE_WIFIDOG_OAUTHSERVICES);
 
 	return 1;
 }

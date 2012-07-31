@@ -95,6 +95,7 @@ typedef enum {
 	oFirewallRuleSet,
 	oTrustedMACList,
 	oHtmlMessageFile,
+	oOAuth,
 } OpCodes;
 
 /** @internal
@@ -134,6 +135,7 @@ static const struct {
 	{ "firewallrule",		oFirewallRule },
 	{ "trustedmaclist",		oTrustedMACList },
 	{ "htmlmessagefile",		oHtmlMessageFile },
+	{ "oauth",		oOAuth },
 	{ NULL,				oBadOption },
 };
 
@@ -182,6 +184,7 @@ config_init(void)
 	config.internal_sock = safe_strdup(DEFAULT_INTERNAL_SOCK);
 	config.rulesets = NULL;
 	config.trustedmaclist = NULL;
+	config.oauth = 0;
 }
 
 /**
@@ -718,6 +721,10 @@ config_read(const char *filename)
 					break;
 				case oHTTPDPassword:
 					config.httpdpassword = safe_strdup(p1);
+					break;
+				case oOAuth:
+					config.oauth = parse_boolean_value(p1);
+					debug(LOG_INFO, "============  OAuth %d ==============", *p1);
 					break;
 				case oBadOption:
 					debug(LOG_ERR, "Bad option on line %d "
