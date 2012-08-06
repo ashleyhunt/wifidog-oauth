@@ -219,29 +219,54 @@ iptables_fw_set_oauth_services(void)
 {
 	const s_config *config = NULL;
 	int gw_port = 0;
-	char *domains_to_enable[] = {
-		/* Google */
-		"accounts.l.google.com",        /* Common */
-		"accounts-cctld.l.google.com",   /* Localized */
-		"clients.l.google.com",
-		"googlehosted.l.googleusercontent.com",
-		"ssl.gstatic.com",
-		/* Facebook */
-		"www.facebook.com",
-		"s-static.ak.fbcdn.net",
-		/* Twitter */
-		"api.twitter.com",
-		"cdn.api.twitter.com",
-		NULL
+	t_oauth_access_domain domains_to_enable[3] = {
+		{"google", {
+			"accounts.l.google.com",        /* Common */
+			"accounts-cctld.l.google.com",   /* Localized */
+			"clients.l.google.com",
+			"googlehosted.l.googleusercontent.com",
+			"ssl.gstatic.com"
+		}},
+		{"facebook", {
+			"www.facebook.com",
+			"s-static.ak.fbcdn.net",
+			NULL, NULL, NULL
+		}},
+		{"twitter", {
+			"api.twitter.com",
+			"cdn.api.twitter.com",
+			NULL, NULL, NULL
+		}}
 	};
-	char *domain = NULL;
-	short i = 0;
+	t_oauth_access_domain service = domains_to_enable[0];
+	t_oauth_services *s;
+	char *d = NULL;
+	char i = 0;
+	char match = 0;
 
-	while (domains_to_enable[i]) {
-		domain = domains_to_enable[i];
-		iptables_do_command("-t filter -A" TABLE_WIFIDOG_OAUTHSERVICES " -d %s -p tcp --dport 443 -j ACCEPT", domain);
-		iptables_do_command("-t nat -A" TABLE_WIFIDOG_OAUTHSERVICES " -d %s -p tcp --dport 443 -j ACCEPT", domain);
-		i++;
+	debug(LOG_DEBUG, "Open traffic for OAuth Services");
+	config = config_get_config();
+	/* Do on each oauth service from config list */
+	for (s = config->oauthservices; s; s = s->next) {
+		/* Look for service's domains */
+		for (i = 0; i < 3; i++) {
+			service = domains_to_enable[i];
+			if (strcmp(service.name, s->name) == 0) {
+				debug(LOG_DEBUG, "Service %s", s->name);
+				match = 1;
+				break;
+			}
+		}
+		/* Open traffic to domain, using iptables */
+		if (match) {
+			i = 0;
+			while (i < 3 && service.domains[i]) {
+				d = service.domains[i];
+				iptables_do_command("-t filter -A" TABLE_WIFIDOG_OAUTHSERVICES " -d %s -p tcp --dport 443 -j ACCEPT", d);
+				iptables_do_command("-t nat -A" TABLE_WIFIDOG_OAUTHSERVICES " -d %s -p tcp --dport 443 -j ACCEPT", d);
+				i++;
+			}
+		}
 	}
 }
 

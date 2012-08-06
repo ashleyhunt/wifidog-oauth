@@ -117,6 +117,11 @@ typedef struct _trusted_mac_t {
 	struct _trusted_mac_t *next;
 } t_trusted_mac;
 
+typedef struct _oauth_services_t {
+	char *name;
+	struct _oauth_services_t *next;
+} t_oauth_services;
+
 /**
  * Configuration structure
  */
@@ -152,6 +157,7 @@ typedef struct {
 	int syslog_facility;	/**< @brief facility to use when using syslog for
 					 logging */
 	int oauth;          /** < @brief Support to login via OAuth */
+	t_oauth_services *oauthservices;
 	t_firewall_ruleset	*rulesets;	/**< @brief firewall rules */
 	t_trusted_mac *trustedmaclist; /**< @brief list of trusted macs */
 } s_config;

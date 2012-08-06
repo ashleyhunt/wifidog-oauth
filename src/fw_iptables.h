@@ -51,6 +51,12 @@ typedef enum fw_access_t_ {
     FW_ACCESS_DENY
 } fw_access_t;
 
+/** Domains need to be open to access to OAuth services */
+typedef struct _oauth_access_domain_t {
+	char *name;
+	char *domains[5];
+} t_oauth_access_domain;
+
 /** @brief Initialize the firewall */
 int iptables_fw_init(void);
 

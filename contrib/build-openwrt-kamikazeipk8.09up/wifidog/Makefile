@@ -23,7 +23,7 @@ define Package/wifidog
   SUBMENU:=Captive Portals
   SECTION:=net
   CATEGORY:=Network
-  DEPENDS:=+iptables-mod-extra +iptables-mod-ipopt +iptables-mod-nat +iptables-mod-nat-extra +libpthread
+  DEPENDS:=+iptables-mod-extra +iptables-mod-ipopt +iptables-mod-nat +iptables-mod-nat-extra +libpthread +libuci
   TITLE:=A wireless captive portal solution
   URL:=http://www.wifidog.org
 endef
