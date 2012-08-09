@@ -56,7 +56,7 @@ extern pthread_mutex_t	client_list_mutex;
 extern pthread_mutex_t	config_mutex;
 
 /**
-Used to supress the error output of the firewall during destruction */ 
+Used to supress the error output of the firewall during destruction */
 static int fw_quiet = 0;
 
 /** @internal
@@ -144,7 +144,7 @@ iptables_compile(const char * table, const char *chain, const t_firewall_rule *r
 
 	snprintf(command, sizeof(command),  "-t %s -A %s ",table, chain);
 	if (rule->mask != NULL) {
-		snprintf((command + strlen(command)), (sizeof(command) - 
+		snprintf((command + strlen(command)), (sizeof(command) -
 					strlen(command)), "-d %s ", rule->mask);
 	}
 	if (rule->protocol != NULL) {
@@ -155,7 +155,7 @@ iptables_compile(const char * table, const char *chain, const t_firewall_rule *r
 		snprintf((command + strlen(command)), (sizeof(command) -
 					strlen(command)), "--dport %s ", rule->port);
 	}
-	snprintf((command + strlen(command)), (sizeof(command) - 
+	snprintf((command + strlen(command)), (sizeof(command) -
 				strlen(command)), "-j %s", mode);
 
 	free(mode);
@@ -262,8 +262,8 @@ iptables_fw_set_oauth_services(void)
 			i = 0;
 			while (i < 3 && service.domains[i]) {
 				d = service.domains[i];
-				iptables_do_command("-t filter -A" TABLE_WIFIDOG_OAUTHSERVICES " -d %s -p tcp --dport 443 -j ACCEPT", d);
-				iptables_do_command("-t nat -A" TABLE_WIFIDOG_OAUTHSERVICES " -d %s -p tcp --dport 443 -j ACCEPT", d);
+				iptables_do_command("-t filter -A " TABLE_WIFIDOG_OAUTHSERVICES " -d %s -p tcp --dport 443 -j ACCEPT", d);
+				iptables_do_command("-t nat -A " TABLE_WIFIDOG_OAUTHSERVICES " -d %s -p tcp --dport 443 -j ACCEPT", d);
 				i++;
 			}
 		}
@@ -272,7 +272,7 @@ iptables_fw_set_oauth_services(void)
 
 /** Initialize the firewall rules
 */
-	int
+int
 iptables_fw_init(void)
 {
 	const s_config *config;
@@ -376,7 +376,7 @@ iptables_fw_init(void)
 	iptables_do_command("-t filter -A " TABLE_WIFIDOG_WIFI_TO_INTERNET " -m state --state INVALID -j DROP");
 
 	/* XXX: Why this? it means that connections setup after authentication
-	   stay open even after the connection is done... 
+	   stay open even after the connection is done...
 	   iptables_do_command("-t filter -A " TABLE_WIFIDOG_WIFI_TO_INTERNET " -m state --state RELATED,ESTABLISHED -j ACCEPT");*/
 
 	//Won't this rule NEVER match anyway?!?!? benoitg, 2007-06-23
