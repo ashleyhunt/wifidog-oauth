@@ -644,33 +644,26 @@ clear_oauth_service_list()
 }
 
 static int
-pushto_oauth_service_list(t_oauth_services **plast, char *multiname)
+pushto_oauth_service_list(t_oauth_services **plast, char *name)
 {
 	t_oauth_services *oser = NULL;
-	char *n;
 
-	/* The string may consist of many services name */
-	n = strtok(multiname, " ");
-	while (n != NULL)
-	{
-		/* Store the service name */
-		oser = safe_malloc(sizeof(t_oauth_services));
-		if (oser == NULL) {
-			debug(LOG_ERR, "Out of memory");
-			return -1;
-		}
-		memset(oser, 0, sizeof(t_oauth_services));
-		oser->name = n;
-		/* Add to top of config list */
-		debug(LOG_INFO, "Add service %s", n);
-		/* If the list has contain items already... */
-		if (*plast != NULL) {
-			oser->next = *plast;
-		}
-		/* Will affect output (config.oauthservices) */
-		*plast = oser;
-		n = strtok(NULL, " ");
+	/* Store the service name */
+	oser = safe_malloc(sizeof(t_oauth_services));
+	if (oser == NULL) {
+		debug(LOG_ERR, "Out of memory");
+		return -1;
 	}
+	memset(oser, 0, sizeof(t_oauth_services));
+	oser->name = name;
+	/* Add to top of config list */
+	debug(LOG_INFO, "Add service %s", name);
+	/* If the list has contain items already... */
+	if (*plast != NULL) {
+		oser->next = *plast;
+	}
+	/* Will affect output (config.oauthservices) */
+	*plast = oser;
 	return 0;
 }
 
@@ -682,7 +675,6 @@ populate_oauth_service_list(struct uci_package *p)
 	struct uci_section *s = NULL;
 	struct uci_option  *o = NULL;
 	t_oauth_services **plast;
-	char *multiname = NULL;
 
 	debug(LOG_INFO, "Populate OAuth service list.");
 	clear_oauth_service_list();
@@ -694,9 +686,12 @@ populate_oauth_service_list(struct uci_package *p)
 			uci_foreach_element(&s->options, oe) {
 				/* Get option */
 				o = uci_to_option(oe);
-				multiname = safe_strdup(o->v.string);
-				/* Add to config list */
-				pushto_oauth_service_list(plast, multiname);
+				if (strcmp(o->e.name, "enabled") == 0 && o->v.string[0] == '1') {
+					debug(LOG_DEBUG, "Service %s", s->e.name);
+					/* Add to config list */
+					pushto_oauth_service_list(plast, safe_strdup(s->e.name));
+					break;
+				}
 			}
 		}
 	}
