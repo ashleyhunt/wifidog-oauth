@@ -246,27 +246,32 @@ iptables_fw_set_oauth_services(void)
 {
 	const s_config *config = NULL;
 	int gw_port = 0;
-	t_oauth_access_domain domains_to_enable[3] = {
+	t_oauth_access_domain services_to_open[3] = {
 		{"google", {
 			"accounts.l.google.com",        /* Common */
 			"accounts-cctld.l.google.com",   /* Localized */
 			"clients.l.google.com",
 			"googlehosted.l.googleusercontent.com",
-			"ssl.gstatic.com"
+			"ssl.gstatic.com",
+			NULL, NULL
 		}},
 		{"facebook", {
-			"www.facebook.com",
+			"www-slb-11-01-prn1.facebook.com",
+			"www-slb-11-05-prn1.facebook.com",
+			"www-slb-11-06-prn1.facebook.com",
+			"www-slb-11-08-prn1.facebook.com",
+			"www-slb-11-12-prn1.facebook.com",
 			"s-static.ak.fbcdn.net",
-			NULL, NULL, NULL
+			NULL
 		}},
 		{"twitter", {
 			"api.twitter.com",
 			"cdn.api.twitter.com",
-			NULL, NULL, NULL
+			NULL, NULL, NULL, NULL, NULL
 		}}
 	};
 	const int number_of_services = 3;
-	t_oauth_access_domain service = domains_to_enable[0];
+	t_oauth_access_domain service = services_to_open[0];
 	t_oauth_services *s;
 	unsigned char i = 0;
 	unsigned char match = 0;
@@ -277,7 +282,7 @@ iptables_fw_set_oauth_services(void)
 	for (s = config->oauthservices; s; s = s->next) {
 		/* Look for service's domains */
 		for (i = 0; i < number_of_services; i++) {
-			service = domains_to_enable[i];
+			service = services_to_open[i];
 			if (strcmp(service.name, s->name) == 0) {
 				debug(LOG_DEBUG, "Service %s", s->name);
 				match = 1;

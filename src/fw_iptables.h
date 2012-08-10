@@ -43,6 +43,8 @@
 #define TABLE_WIFIDOG_UNKNOWN   "WiFiDog_$ID$_Unknown"
 #define TABLE_WIFIDOG_LOCKED    "WiFiDog_$ID$_Locked"
 #define TABLE_WIFIDOG_TRUSTED    "WiFiDog_$ID$_Trusted"
+
+#define MAX_DOMAIN_OAUTH	7
 /*@}*/
 
 /** Used by iptables_fw_access to select if the client should be granted of denied access */
@@ -54,7 +56,7 @@ typedef enum fw_access_t_ {
 /** Domains need to be open to access to OAuth services */
 typedef struct _oauth_access_domain_t {
 	char *name;
-	char *domains[5];
+	char *domains[MAX_DOMAIN_OAUTH];
 } t_oauth_access_domain;
 
 /** @brief Initialize the firewall */
