@@ -255,7 +255,7 @@ iptables_fw_set_oauth_services(void)
 			"ssl.gstatic.com"
 		}},
 		{"facebook", {
-			"facebook.com",
+			"www.facebook.com",
 			"s-static.ak.fbcdn.net",
 			NULL, NULL, NULL
 		}},
