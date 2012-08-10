@@ -37,6 +37,7 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#include <netdb.h>
 
 #include "common.h"
 
@@ -215,6 +216,32 @@ iptables_fw_set_authservers(void)
 }
 
 void
+iptables_open_access_domain(char *domain)
+{
+	struct addrinfo *ip_list;
+	struct addrinfo *ip;
+	struct addrinfo hints;
+	struct sockaddr_in *their_addr;
+
+	debug(LOG_DEBUG, "%s", domain);
+	memset(&hints, 0, sizeof hints);
+	hints.ai_family = AF_INET; // use AF_INET6 to force IPv6
+	hints.ai_socktype = SOCK_STREAM;
+
+	/* Retrieve IP address */
+	if (getaddrinfo(domain, "https", &hints, &ip_list) >= 0) {
+		for (ip = ip_list; ip != NULL; ip = ip->ai_next) {
+			their_addr = (struct sockaddr_in *)ip->ai_addr;
+			iptables_do_command("-t filter -A " TABLE_WIFIDOG_OAUTHSERVICES " -d %s -p tcp --dport 443 -j ACCEPT",
+			                    inet_ntoa(their_addr->sin_addr));
+			iptables_do_command("-t nat -A " TABLE_WIFIDOG_OAUTHSERVICES " -d %s -p tcp --dport 443 -j ACCEPT",
+			                    inet_ntoa(their_addr->sin_addr));
+		}
+		freeaddrinfo(ip_list);
+	}
+}
+
+void
 iptables_fw_set_oauth_services(void)
 {
 	const s_config *config = NULL;
@@ -228,7 +255,7 @@ iptables_fw_set_oauth_services(void)
 			"ssl.gstatic.com"
 		}},
 		{"facebook", {
-			"www.facebook.com",
+			"facebook.com",
 			"s-static.ak.fbcdn.net",
 			NULL, NULL, NULL
 		}},
@@ -238,18 +265,18 @@ iptables_fw_set_oauth_services(void)
 			NULL, NULL, NULL
 		}}
 	};
+	const int number_of_services = 3;
 	t_oauth_access_domain service = domains_to_enable[0];
 	t_oauth_services *s;
-	char *d = NULL;
-	char i = 0;
-	char match = 0;
+	unsigned char i = 0;
+	unsigned char match = 0;
 
 	debug(LOG_DEBUG, "Open traffic for OAuth Services");
 	config = config_get_config();
 	/* Do on each oauth service from config list */
 	for (s = config->oauthservices; s; s = s->next) {
 		/* Look for service's domains */
-		for (i = 0; i < 3; i++) {
+		for (i = 0; i < number_of_services; i++) {
 			service = domains_to_enable[i];
 			if (strcmp(service.name, s->name) == 0) {
 				debug(LOG_DEBUG, "Service %s", s->name);
@@ -260,10 +287,8 @@ iptables_fw_set_oauth_services(void)
 		/* Open traffic to domain, using iptables */
 		if (match) {
 			i = 0;
-			while (i < 3 && service.domains[i]) {
-				d = service.domains[i];
-				iptables_do_command("-t filter -A " TABLE_WIFIDOG_OAUTHSERVICES " -d %s -p tcp --dport 443 -j ACCEPT", d);
-				iptables_do_command("-t nat -A " TABLE_WIFIDOG_OAUTHSERVICES " -d %s -p tcp --dport 443 -j ACCEPT", d);
+			while (i < number_of_services && service.domains[i]) {
+				iptables_open_access_domain(service.domains[i]);
 				i++;
 			}
 		}
