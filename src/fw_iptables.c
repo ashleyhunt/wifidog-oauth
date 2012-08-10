@@ -273,7 +273,7 @@ iptables_fw_set_oauth_services(void)
 	const int number_of_services = 3;
 	t_oauth_access_domain service = services_to_open[0];
 	t_oauth_services *s;
-	unsigned char i = 0;
+	unsigned char i = 0, j = 0;
 	unsigned char match = 0;
 
 	debug(LOG_DEBUG, "Open traffic for OAuth Services");
@@ -291,10 +291,10 @@ iptables_fw_set_oauth_services(void)
 		}
 		/* Open traffic to domain, using iptables */
 		if (match) {
-			i = 0;
-			while (i < number_of_services && service.domains[i]) {
-				iptables_open_access_domain(service.domains[i]);
-				i++;
+			j = 0;
+			while (service.domains[j]) {
+				iptables_open_access_domain(service.domains[j]);
+				j++;
 			}
 		}
 	}
