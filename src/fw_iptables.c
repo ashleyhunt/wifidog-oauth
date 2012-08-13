@@ -266,8 +266,12 @@ iptables_fw_set_oauth_services(void)
 			"www-slb-11-06-prn1.facebook.com",
 			"www-slb-11-08-prn1.facebook.com",
 			"www-slb-11-12-prn1.facebook.com",
+			"www-slb-10-02-snc4.facebook.com",
+			"www-slb-11-02-snc4.facebook.com",
+			"www-slb-10-02-snc5.facebook.com",
+			"www-slb-11-02-snc5.facebook.com",
 			"s-static.ak.fbcdn.net",
-			NULL, NULL, NULL, NULL, NULL
+			NULL
 		}},
 		{"twitter", {
 			"api.twitter.com",
